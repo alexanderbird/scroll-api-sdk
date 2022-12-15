@@ -1,1 +1,1 @@
-export type VerseId: string;
+export type VerseId = string;

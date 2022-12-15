@@ -16,7 +16,7 @@ export class Client {
     return FAKE_RESPONSE;
   }
 
-  getFeedItems(input: { seed: string }): PaginatedVerses {
+  getFeedItems(input: { seed?: string }): PaginatedVerses {
     return FAKE_RESPONSE;
   }
 
