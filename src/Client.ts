@@ -1,5 +1,6 @@
 import { PaginatedVerses } from './glossary/PaginatedVerses';
-import { VerseId } from './glossary/VerseId';
+import { VerseId, PartialVerseId } from './glossary/VerseId';
+import { GetVersesInCanonicalOrderInput } from './glossary/GetVersesInCanonicalOrderInput';
 import * as cannedData from './canned-data.json';
 import { MD5 } from 'crypto-js';
 
@@ -42,8 +43,16 @@ export class Client {
     return { verses, nextPage };
   }
 
-  getVersesInNaturalOrder(input: { startAt: VerseId }): PaginatedVerses {
-    return FAKE_RESPONSE;
+  getVersesInCanonicalOrder(input: GetVersesInCanonicalOrderInput): PaginatedVerses {
+    const firstKey = input.page ? input.page : input.startingId;
+    const allVerses = input.direction === 'FORWARD'
+      ? cannedData.filter(x => x.id.startsWith(input.idPrefix) && x.id > firstKey)
+      : cannedData.slice().reverse().filter(x => x.id.startsWith(input.idPrefix) && x.id < firstKey)
+    const verses = allVerses.slice(0, input.pageSize);
+    const limitVerse = verses[verses.length - 1];
+    const hasAnotherPage = allVerses.length > verses.length;
+    const nextPage = hasAnotherPage ? limitVerse.id : "";
+    return { verses, nextPage };
   }
 }
 
