@@ -9,7 +9,8 @@
   ],
   "scripts": {
     "build": "tsc",
-    "test": "jest"
+    "test": "jest",
+    "update-environment": "./update_environment_file.sh"
   },
   "devDependencies": {
     "@jest/globals": "^29.3.1",
