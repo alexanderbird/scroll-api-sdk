@@ -1,8 +1,10 @@
+import { MD5 } from 'crypto-js';
+import axios from 'axios';
 import { PaginatedVerses } from './glossary/PaginatedVerses';
 import { VerseId, PartialVerseId } from './glossary/VerseId';
 import { GetVersesInCanonicalOrderInput } from './glossary/GetVersesInCanonicalOrderInput';
 import * as cannedData from './canned-data.json';
-import { MD5 } from 'crypto-js';
+import * as environment from './environment';
 
 const getCannedData = () => cannedData.slice();
 
@@ -36,15 +38,38 @@ export class Client {
     return FAKE_RESPONSE;
   }
 
-  getFeedItems(input: { } & PaginationInputs): PaginatedVerses {
-    const page = input.page || MD5(this.config.timeProvider().toString()).toString();
-    const allRemainingVerses = getCannedData().sort((lhs, rhs) => lhs.feedKey < rhs.feedKey ? -1 : 1)
-      .filter(x => x.feedKey >= page);
-    const verses = allRemainingVerses.slice(0, input.pageSize);
-    const nextPage = allRemainingVerses[input.pageSize]?.feedKey || "0";
-    const output = { verses, nextPage };
-    console.info({ sdkAction: 'getFeedItems', input, output });
-    return output;
+  async getFeedItems(input: { } & PaginationInputs): Promise<PaginatedVerses> {
+    const log: { [key: string]: any } = { sdkAction: 'getFeedItems', input };
+    try {
+      const page = input.page || MD5(this.config.timeProvider().toString()).toString();
+      const response = await axios.get(environment.api.endpoint + "/Feed", {
+        params: {
+          translation: 'web-mini',
+          language: 'en',
+          feedStart: page
+        },
+        headers: {
+          'x-api-key': environment.api.token
+        }
+      });
+      const allRemainingVerses = response.data.Items.map(x => ({
+        feedKey: x.feedKey.S,
+        textId: x.textId.S,
+        text: x.text.S,
+        related: x.related.S,
+        id: x.id.S,
+        reference: x.reference.S
+      }));
+      const verses = allRemainingVerses.slice(0, input.pageSize);
+      const nextPage = allRemainingVerses[input.pageSize - 1]?.feedKey || "0";
+      const output = { verses, nextPage };
+      log.output = output;
+      return output;
+    } catch(error) {
+      log.error = error;
+    } finally {
+      console.info(log);
+    }
   }
 
   getVersesInCanonicalOrder(input: GetVersesInCanonicalOrderInput): PaginatedVerses {
