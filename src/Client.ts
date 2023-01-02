@@ -1,30 +1,19 @@
 import { MD5 } from 'crypto-js';
-import axios from 'axios';
 import { PaginatedVerses } from './glossary/PaginatedVerses';
 import { VerseId, PartialVerseId } from './glossary/VerseId';
 import { GetVersesInCanonicalOrderInput } from './glossary/GetVersesInCanonicalOrderInput';
+import { GetFeedItemsInput } from './glossary/GetFeedItemsInput';
 import * as cannedData from './canned-data.json';
 import * as environment from './environment';
+import { HttpGet } from './facades/HttpGet';
+import { Log } from './facades/Log';
 
 const getCannedData = () => cannedData.slice();
 
-const FAKE_RESPONSE = {
-  nextPage: 'todo',
-  verses: [{
-    reference: "Genesis 1:1",
-    id: '1-1-1',
-    text: "In the beginning God created the heavens and the earth",
-    related: []
-  }]
-};
-
-export interface PaginationInputs {
-  pageSize: number;
-  page?: string;
-}
-
 export interface ClientConfiguration {
   timeProvider: () => Number;
+  httpGet: HttpGet;
+  log: Log;
 }
 
 export class Client {
@@ -35,15 +24,24 @@ export class Client {
   }
 
   getBatchOfVerses(input: { verses: string[], nextPage?: string }): PaginatedVerses {
-    return FAKE_RESPONSE;
+    return {
+      nextPage: 'todo',
+      verses: [{
+        reference: "Genesis 1:1",
+        id: '1-1-1',
+        text: "In the beginning God created the heavens and the earth",
+        related: []
+      }]
+    };
   }
 
-  async getFeedItems(input: { } & PaginationInputs): Promise<PaginatedVerses> {
+  async getFeedItems(input: GetFeedItemsInput): Promise<PaginatedVerses> {
     const log: { [key: string]: any } = { sdkAction: 'getFeedItems', input };
     try {
       const page = input.page || MD5(this.config.timeProvider().toString()).toString();
-      const response = await axios.get(environment.api.endpoint + "/Feed", {
-        params: {
+      const response: any = await this.config.httpGet({
+        url: environment.api.endpoint + "/Feed",
+        queryParams: {
           translation: 'web-mini',
           language: 'en',
           feedStart: page
@@ -52,7 +50,7 @@ export class Client {
           'x-api-key': environment.api.token
         }
       });
-      const allRemainingVerses = response.data.Items.map(x => ({
+      const allRemainingVerses = response.Items.map(x => ({
         feedKey: x.feedKey.S,
         textId: x.textId.S,
         text: x.text.S,
@@ -68,7 +66,7 @@ export class Client {
     } catch(error) {
       log.error = error;
     } finally {
-      console.info(log);
+      this.config.log(log);
     }
   }
 
@@ -82,7 +80,7 @@ export class Client {
     const hasAnotherPage = allVerses.length > verses.length;
     const nextPage = hasAnotherPage ? limitVerse.id : "";
     const output = { verses, nextPage };
-    console.info({ sdkAction: 'getVersesInCanonicalOrder', input, output });
+    this.config.log({ sdkAction: 'getVersesInCanonicalOrder', input, output });
     return output;
   }
 }
