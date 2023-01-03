@@ -20,6 +20,15 @@ export class Client {
   private config: ClientConfiguration;
 
   constructor(config: ClientConfiguration) {
+    const providedConfig = Object.entries(config)
+      .map(([key, value]) => ({ key, value }))
+      .filter(({ value }) => !!value)
+      .map(({ key }) => key);
+    const expectedConfig = ['log', 'timeProvider', 'httpGet'];
+    const missingConfig = expectedConfig.filter(x => !providedConfig.includes(x));
+    if (missingConfig.length) {
+      throw new Error('Cannot construct Client because these required parameter(s) are missing: ' + missingConfig.join(', '));
+    }
     this.config = config;
   }
 

@@ -6,7 +6,7 @@ describe('getBatchOfVerses', () => {
     const client = buildClient({
       timeProvider: () => 0,
       httpGet: (() => Promise.resolve({ json: () => Promise.resolve({ Items: [] }) })) as HttpGet,
-      log: x => console.info(x),
+      log: x => {},
     });
     const actual = client.getBatchOfVerses({ verses: [] });
     // after the spike is complete maybe we'll want unit tests showing that we

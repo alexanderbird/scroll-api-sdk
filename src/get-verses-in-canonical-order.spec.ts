@@ -6,7 +6,7 @@ describe('getVersesInCanonicalOrder', () => {
     const client = buildClient({
       timeProvider: () => 0,
       httpGet: (() => Promise.resolve({ json: () => Promise.resolve({ Items: [] }) })) as HttpGet,
-      log: x => console.info(x),
+      log: x => {},
     });
     const actual = client.getVersesInCanonicalOrder({ idPrefix: '65-001', startingId: '65-001-002', direction: 'FORWARD', pageSize: 42 });
     // after the spike is complete maybe we'll want unit tests showing that we
