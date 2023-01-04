@@ -4,12 +4,9 @@ import { VerseId, PartialVerseId } from './glossary/VerseId';
 import { VerseWithAllIds } from './glossary/Verse';
 import { GetVersesInCanonicalOrderInput } from './glossary/GetVersesInCanonicalOrderInput';
 import { GetFeedItemsInput } from './glossary/GetFeedItemsInput';
-import * as cannedData from './canned-data.json';
 import * as environment from './environment';
 import { HttpGet } from './facades/HttpGet';
 import { Log } from './facades/Log';
-
-const getCannedData = () => cannedData.slice();
 
 export interface ClientConfiguration {
   timeProvider: () => Number;
