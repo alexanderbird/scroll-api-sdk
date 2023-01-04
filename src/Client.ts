@@ -80,6 +80,13 @@ export class Client {
   }
 
   getVersesInCanonicalOrder(input: GetVersesInCanonicalOrderInput): PaginatedVerses {
+    if (input.direction === 'REVERSE') {
+      return this.oldGetVersesInCanonicalOrder(input);
+    }
+    return this.oldGetVersesInCanonicalOrder(input);
+  }
+
+  oldGetVersesInCanonicalOrder(input: GetVersesInCanonicalOrderInput): PaginatedVerses {
     const firstKey = input.page ? input.page : input.startingId;
     const allVerses = input.direction === 'FORWARD'
       ? getCannedData().filter(x => x.id.startsWith(input.idPrefix) && x.id > firstKey)
