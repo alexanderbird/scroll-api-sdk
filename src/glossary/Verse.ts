@@ -6,3 +6,8 @@ export interface Verse {
   reference: string;
   related: string[];
 }
+
+export interface VerseWithAllIds extends Verse {
+  textId: string;
+  feedKey: string;
+}

@@ -1,6 +1,7 @@
 import { MD5 } from 'crypto-js';
 import { PaginatedVerses } from './glossary/PaginatedVerses';
 import { VerseId, PartialVerseId } from './glossary/VerseId';
+import { VerseWithAllIds } from './glossary/Verse';
 import { GetVersesInCanonicalOrderInput } from './glossary/GetVersesInCanonicalOrderInput';
 import { GetFeedItemsInput } from './glossary/GetFeedItemsInput';
 import * as cannedData from './canned-data.json';
@@ -59,14 +60,7 @@ export class Client {
           'x-api-key': environment.api.token
         }
       });
-      const allRemainingVerses = response.Items.map(x => ({
-        feedKey: x.feedKey.S,
-        textId: x.textId.S,
-        text: x.text.S,
-        related: x.related.S,
-        id: x.id.S,
-        reference: x.reference.S
-      }));
+      const allRemainingVerses = this.mapItemsToVerses(response.Items);
       const verses = allRemainingVerses.slice(0, input.pageSize);
       const nextPage = allRemainingVerses[input.pageSize - 1]?.feedKey || "0";
       const output = { verses, nextPage };
@@ -79,11 +73,40 @@ export class Client {
     }
   }
 
-  getVersesInCanonicalOrder(input: GetVersesInCanonicalOrderInput): PaginatedVerses {
+  async getVersesInCanonicalOrder(input: GetVersesInCanonicalOrderInput): Promise<PaginatedVerses> {
     if (input.direction === 'REVERSE') {
-      return this.oldGetVersesInCanonicalOrder(input);
+      return Promise.resolve(this.oldGetVersesInCanonicalOrder(input));
     }
-    return this.oldGetVersesInCanonicalOrder(input);
+    return this.newGetVersesInCanonicalOrder(input);
+  }
+
+  async newGetVersesInCanonicalOrder(input: GetVersesInCanonicalOrderInput): Promise<PaginatedVerses> {
+    const log: { [key: string]: any } = { sdkAction: 'getVersesInCanonicalOrder', input };
+    try {
+      const response: any = await this.config.httpGet({
+        url: environment.api.endpoint + "/Canonical",
+        queryParams: {
+          translation: 'web-mini',
+          language: 'en',
+          startingId: input.page || input.startingId,
+          idPrefix: input.idPrefix
+        },
+        headers: {
+          'x-api-key': environment.api.token
+        },
+        logSink: (key, value) => { log[key] = value; }
+      });
+      const allRemainingVerses = this.mapItemsToVerses(response.Items);
+      const verses = allRemainingVerses.slice(0, input.pageSize);
+      const nextPage = allRemainingVerses[input.pageSize - 1]?.id;
+      const output = { verses, nextPage };
+      log.output = output;
+      return output;
+    } catch(error) {
+      log.error = error;
+    } finally {
+      this.config.log(log);
+    }
   }
 
   oldGetVersesInCanonicalOrder(input: GetVersesInCanonicalOrderInput): PaginatedVerses {
@@ -99,7 +122,22 @@ export class Client {
     this.config.log({ sdkAction: 'getVersesInCanonicalOrder', input, output });
     return output;
   }
+
+  private mapItemsToVerses(items: Array<DynamoDbStringObject<VerseWithAllIds>>) {
+    return items.map(x => ({
+      feedKey: x.feedKey.S,
+      textId: x.textId.S,
+      text: x.text.S,
+      related: x.related.S,
+      id: x.id.S,
+      reference: x.reference.S
+    }));
+  }
 }
+
+type DynamoDbStringObject<Type> = {
+  [Property in keyof Type]: { S: Type[Property] };
+};
 
 export function buildClient(config: ClientConfiguration) {
   return new Client(config);

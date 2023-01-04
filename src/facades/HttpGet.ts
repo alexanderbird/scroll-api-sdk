@@ -6,6 +6,7 @@ export interface HttpGetRequest {
   url: string;
   queryParams: { [key: string]: string };
   headers: { [key: string]: string };
+  logSink?: (key: string, value: any) => void;
 }
 
 export interface SimpleFetch {
@@ -21,16 +22,27 @@ export interface FetchResponse {
 }
 
 export function wrapFetch(fetch: SimpleFetch): HttpGet {
-  return ({ url, queryParams, headers }) =>
-    fetch(url + "?" + stringifyQueryString(queryParams), { headers })
+  return ({ url, queryParams, headers, logSink }) => {
+    const log = logSink || (() => {});
+    const urlWithParams = url + "?" + stringifyQueryString(queryParams);
+    log('urlWithParams', urlWithParams);
+    return fetch(urlWithParams, { headers })
       .then(response => {
+        log('responseStatus', response.status);
         if (response.ok) {
-          return response.json();
+          return response.json().then(json => {
+            if (json['__type']) {
+              throw new Error(`Internal failure that we haven't correctly mapped to 500 status code yet. ${JSON.stringify(json, null, 2)}`);
+            }
+            log('responseJson', json);
+            return json;
+          });
         }
         return response.text().then(details => {
           throw new Error(`HTTP ${response.status} ${response.statusText}: ${details}`);
         });
       });
+    };
 }
 
 function stringifyQueryString(params: { [key: string]: string }) {

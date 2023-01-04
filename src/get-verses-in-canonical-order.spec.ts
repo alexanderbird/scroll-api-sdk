@@ -13,4 +13,6 @@ describe('getVersesInCanonicalOrder', () => {
     // make the correct GET request and return the correctly transformed
     // response?
   });
+
+  test.todo('does not permit a startingId which does not start with the idPrefix');
 });
