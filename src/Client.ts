@@ -74,17 +74,11 @@ export class Client {
   }
 
   async getVersesInCanonicalOrder(input: GetVersesInCanonicalOrderInput): Promise<PaginatedVerses> {
-    if (input.direction === 'REVERSE') {
-      return Promise.resolve(this.oldGetVersesInCanonicalOrder(input));
-    }
-    return this.newGetVersesInCanonicalOrder(input);
-  }
-
-  async newGetVersesInCanonicalOrder(input: GetVersesInCanonicalOrderInput): Promise<PaginatedVerses> {
     const log: { [key: string]: any } = { sdkAction: 'getVersesInCanonicalOrder', input };
     try {
+      const path = input.direction === 'REVERSE' ? '/ReverseCanonical' : '/Canonical';
       const response: any = await this.config.httpGet({
-        url: environment.api.endpoint + "/Canonical",
+        url: environment.api.endpoint + path,
         queryParams: {
           translation: 'web-mini',
           language: 'en',
@@ -98,7 +92,7 @@ export class Client {
       });
       const allRemainingVerses = this.mapItemsToVerses(response.Items);
       const verses = allRemainingVerses.slice(0, input.pageSize);
-      const nextPage = allRemainingVerses[input.pageSize - 1]?.id;
+      const nextPage = response.ScannedCount <= input.pageSize ? undefined : allRemainingVerses[input.pageSize - 1]?.id;
       const output = { verses, nextPage };
       log.output = output;
       return output;
@@ -107,20 +101,6 @@ export class Client {
     } finally {
       this.config.log(log);
     }
-  }
-
-  oldGetVersesInCanonicalOrder(input: GetVersesInCanonicalOrderInput): PaginatedVerses {
-    const firstKey = input.page ? input.page : input.startingId;
-    const allVerses = input.direction === 'FORWARD'
-      ? getCannedData().filter(x => x.id.startsWith(input.idPrefix) && x.id > firstKey)
-      : getCannedData().reverse().filter(x => x.id.startsWith(input.idPrefix) && x.id < firstKey)
-    const verses = allVerses.slice(0, input.pageSize);
-    const limitVerse = verses[verses.length - 1];
-    const hasAnotherPage = allVerses.length > verses.length;
-    const nextPage = hasAnotherPage ? limitVerse.id : "";
-    const output = { verses, nextPage };
-    this.config.log({ sdkAction: 'getVersesInCanonicalOrder', input, output });
-    return output;
   }
 
   private mapItemsToVerses(items: Array<DynamoDbStringObject<VerseWithAllIds>>) {
