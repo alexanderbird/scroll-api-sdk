@@ -30,16 +30,31 @@ export class Client {
     this.config = config;
   }
 
-  getBatchOfVerses(input: { verses: string[], nextPage?: string }): PaginatedVerses {
-    return {
-      nextPage: 'todo',
-      verses: [{
-        reference: "Genesis 1:1",
-        id: '1-1-1',
-        text: "In the beginning God created the heavens and the earth",
-        related: []
-      }]
-    };
+  async getVerses(input: { ids: string[] }): Promise<PaginatedVerses> {
+    const log: { [key: string]: any } = { sdkAction: 'getVerses', input };
+    try {
+      const response: any = await this.config.httpGet({
+        logSink: (key, value) => { log[key] = value; },
+        url: environment.api.endpoint + "/Verses",
+        queryParams: {
+          translation: 'web-mini',
+          language: 'en',
+          ids: input.ids.join(',')
+        },
+        headers: {
+          'x-api-key': environment.api.token
+        }
+      });
+      const output = {
+        verses: this.mapItemsToVerses(Object.values(response.Responses)[0] as any)
+      };
+      log.output = output;
+      return output;
+    } catch(error) {
+      log.error = error;
+    } finally {
+      this.config.log(log);
+    }
   }
 
   async getFeedItems(input: GetFeedItemsInput): Promise<PaginatedVerses> {
@@ -47,6 +62,7 @@ export class Client {
     try {
       const page = input.page || MD5(this.config.timeProvider().toString()).toString();
       const response: any = await this.config.httpGet({
+        logSink: (key, value) => { log[key] = value; },
         url: environment.api.endpoint + "/Feed",
         queryParams: {
           translation: 'web-mini',

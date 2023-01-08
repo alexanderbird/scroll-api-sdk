@@ -8,7 +8,7 @@ describe('getBatchOfVerses', () => {
       httpGet: (() => Promise.resolve({ json: () => Promise.resolve({ Items: [] }) })) as HttpGet,
       log: x => {},
     });
-    const actual = client.getBatchOfVerses({ verses: [] });
+    const actual = client.getVerses({ ids: [] });
     // after the spike is complete maybe we'll want unit tests showing that we
     // make the correct GET request and return the correctly transformed
     // response?

@@ -1,6 +1,6 @@
 import { Verse } from './Verse';
 
 export interface PaginatedVerses {
-  nextPage: string;
+  nextPage?: string;
   verses: Verse[];
 }
