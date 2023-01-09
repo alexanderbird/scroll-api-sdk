@@ -37,7 +37,7 @@ export class Client {
         logSink: (key, value) => { log[key] = value; },
         url: environment.api.endpoint + "/Verses",
         queryParams: {
-          translation: 'web-mini',
+          translation: 'web-strongs',
           language: 'en',
           ids: input.ids.join(',')
         },
@@ -65,7 +65,7 @@ export class Client {
         logSink: (key, value) => { log[key] = value; },
         url: environment.api.endpoint + "/Feed",
         queryParams: {
-          translation: 'web-mini',
+          translation: 'web-strongs',
           language: 'en',
           feedStart: page
         },
@@ -93,7 +93,7 @@ export class Client {
       const response: any = await this.config.httpGet({
         url: environment.api.endpoint + path,
         queryParams: {
-          translation: 'web-mini',
+          translation: 'web-strongs',
           language: 'en',
           startingId: input.page || input.startingId,
           idPrefix: input.idPrefix
@@ -120,7 +120,7 @@ export class Client {
     return items.map(x => ({
       feedKey: x.feedKey.S,
       textId: x.textId.S,
-      text: x.text.S,
+      text: JSON.parse(x.data.S).map(x => x.t).join(" "),
       related: x.related.S,
       id: x.id.S,
       reference: x.reference.S

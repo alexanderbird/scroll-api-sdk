@@ -10,4 +10,7 @@ export interface Verse {
 export interface VerseWithAllIds extends Verse {
   textId: string;
   feedKey: string;
+  text: undefined;
+  data: string;
+  type: string;
 }
