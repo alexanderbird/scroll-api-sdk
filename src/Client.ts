@@ -116,11 +116,12 @@ export class Client {
     }
   }
 
-  private mapItemsToVerses(items: Array<DynamoDbStringObject<VerseWithAllIds>>) {
+  private mapItemsToVerses(items: Array<DynamoDbStringObject<VerseWithAllIds>>): Array<VerseWithAllIds> {
     return items.map(x => ({
       feedKey: x.feedKey.S,
       textId: x.textId.S,
-      text: JSON.parse(x.data.S).map(x => x.t).join(" "),
+      data: JSON.parse(x.data.S),
+      type: x.type.S,
       related: x.related.S,
       id: x.id.S,
       reference: x.reference.S
