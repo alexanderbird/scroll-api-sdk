@@ -4,6 +4,7 @@ import { VerseId, PartialVerseId } from './glossary/VerseId';
 import { VerseWithAllIds } from './glossary/Verse';
 import { GetVersesInCanonicalOrderInput } from './glossary/GetVersesInCanonicalOrderInput';
 import { GetFeedItemsInput } from './glossary/GetFeedItemsInput';
+import { GetVersesInput } from './glossary/GetVersesInput';
 import * as environment from './environment';
 import { HttpGet } from './facades/HttpGet';
 import { Log } from './facades/Log';
@@ -30,15 +31,16 @@ export class Client {
     this.config = config;
   }
 
-  async getVerses(input: { ids: string[] }): Promise<PaginatedVerses> {
+  async getVerses(input: GetVersesInput): Promise<PaginatedVerses> {
     const log: { [key: string]: any } = { sdkAction: 'getVerses', input };
     try {
       const response: any = await this.config.httpGet({
         logSink: (key, value) => { log[key] = value; },
         url: environment.api.endpoint + "/Verses",
         queryParams: {
-          translation: 'web-strongs',
-          language: 'en',
+          translation: input.translation,
+          language: input.language,
+          document: input.document,
           ids: input.ids.join(',')
         },
         headers: {
