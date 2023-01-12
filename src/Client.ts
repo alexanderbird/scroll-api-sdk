@@ -38,9 +38,8 @@ export class Client {
         logSink: (key, value) => { log[key] = value; },
         url: environment.api.endpoint + "/Verses",
         queryParams: {
-          translation: input.translation,
-          language: input.language,
-          document: input.document,
+          translation: 'web-strongs',
+          language: 'en',
           ids: input.ids.join(',')
         },
         headers: {
