@@ -1,10 +1,11 @@
 import { MD5 } from 'crypto-js';
 import { PaginatedVerses } from './glossary/PaginatedVerses';
 import { VerseId, PartialVerseId } from './glossary/VerseId';
-import { VerseWithAllIds } from './glossary/Verse';
+import { VerseWithAllIds, Verse } from './glossary/Verse';
 import { GetVersesInCanonicalOrderInput } from './glossary/GetVersesInCanonicalOrderInput';
 import { GetFeedItemsInput } from './glossary/GetFeedItemsInput';
 import { GetVersesInput } from './glossary/GetVersesInput';
+import { GetItemInput } from './glossary/GetItemInput';
 import * as environment from './environment';
 import { HttpGet } from './facades/HttpGet';
 import { Log } from './facades/Log';
@@ -29,6 +30,27 @@ export class Client {
       throw new Error('Cannot construct Client because these required parameter(s) are missing: ' + missingConfig.join(', '));
     }
     this.config = config;
+  }
+
+  async getItem(input: GetItemInput): Promise<Verse> {
+    const log: { [key: string]: any } = { sdkAction: 'getItem', input };
+    try {
+      const response: any = await this.config.httpGet({
+        logSink: (key, value) => { log[key] = value; },
+        url: environment.api.endpoint + "/Item",
+        queryParams: { ...input },
+        headers: {
+          'x-api-key': environment.api.token
+        }
+      });
+      const output = this.mapItemToVerse(response.Item);
+      log.output = output;
+      return output;
+    } catch(error) {
+      log.error = error;
+    } finally {
+      this.config.log(log);
+    }
   }
 
   async getVerses(input: GetVersesInput): Promise<PaginatedVerses> {
@@ -117,16 +139,20 @@ export class Client {
     }
   }
 
+  private mapItemToVerse(item: DynamoDbStringObject<VerseWithAllIds>): VerseWithAllIds {
+    return {
+      feedKey: item.feedKey?.S,
+      textId: item.textId.S,
+      data: JSON.parse(item.data.S),
+      type: item.type.S,
+      related: item.related.S,
+      id: item.id.S,
+      reference: item.reference.S
+    };
+  }
+
   private mapItemsToVerses(items: Array<DynamoDbStringObject<VerseWithAllIds>>): Array<VerseWithAllIds> {
-    return items.map(x => ({
-      feedKey: x.feedKey.S,
-      textId: x.textId.S,
-      data: JSON.parse(x.data.S),
-      type: x.type.S,
-      related: x.related.S,
-      id: x.id.S,
-      reference: x.reference.S
-    }));
+    return items.map(x => this.mapItemToVerse(x));
   }
 }
 
