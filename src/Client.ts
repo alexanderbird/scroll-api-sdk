@@ -60,7 +60,7 @@ export class Client {
         logSink: (key, value) => { log[key] = value; },
         url: environment.api.endpoint + "/Verses",
         queryParams: {
-          translation: 'web-strongs',
+          translation: 'webp',
           language: 'en',
           ids: input.ids.join(',')
         },
@@ -88,7 +88,7 @@ export class Client {
         logSink: (key, value) => { log[key] = value; },
         url: environment.api.endpoint + "/Feed",
         queryParams: {
-          translation: 'web-strongs',
+          translation: 'webp',
           language: 'en',
           feedStart: page
         },
@@ -116,7 +116,7 @@ export class Client {
       const response: any = await this.config.httpGet({
         url: environment.api.endpoint + path,
         queryParams: {
-          translation: 'web-strongs',
+          translation: 'webp',
           language: 'en',
           startingId: input.page || input.startingId,
           idPrefix: input.idPrefix
